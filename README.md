@@ -47,3 +47,16 @@ Alternative is to use CARB's model EMFAC2017
      * speed = aggregated
      * fuel = all
 
+## Vehicle definitions
+
+From EMFAC2017 Volume III - Technical Documentation:
+EMFAC2017 uses EMFAC2011 vehicle and technology classifications.  See table on pdf 202, Table 6.1-1 "Summary List of Vehicle Classes"
+- LDA = passenger cars
+- LDT1 = Light-Duty Trucks (GVWR <6000 lbs. and ETW <= 0-3750 lbs) 
+- LDT2 = Light-Duty Trucks (GVWR <6000 lbs. and ETW 3751-5750 lbs) 
+
+From Institute for Local Government: https://www.ca-ilg.org/post/basics-sb-375
+
+ * "SB 375, authored by Senator Darrell Steinberg, directs the Air Resources Board to set regional targets for the reduction of greenhouse gas emissions. Aligning these regional plans is intended to help California achieve GHG reduction goals for cars and light trucks under AB 32, the state’s landmark climate change legislation."
+
+We only deal with codes LDA, LDT1, LDT2 (to be confirmed)
