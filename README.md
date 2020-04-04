@@ -18,7 +18,11 @@ Using State of CA Dept of Finance historical values: http://www.dof.ca.gov/Forec
 Local Area Gross Domestic Product from U.S. Bureau of Economic Analysis: 
  * Current 2015-2018 data: https://www.bea.gov/data/gdp/gdp-county-metro-and-other-areas
    * `BEA_Real_Gross_Domestic_Product_by_County_2015-2018.xlsx`
- * Archives: https://apps.bea.gov/regional/histdata/
+ * 2012-2015 data:
+   * site: https://apps.bea.gov/regional/histdata/releases/1218gdpcounty/index.cfm
+   * link: https://apps.bea.gov/regional/histdata/releases/1218gdpcounty/gdpcounty1218.xlsx
+   * `BEA_Real_Gross_Domestic_Product_by_County_2012-2015.xlsx`
+ * Archives: https://apps.bea.gov/regional/histdata/ (these archives do not have county level)
    * Gross Domestic Product by Metropolitan Area, Advance 2017, and Revised 2001-2016: `gdpmetro0918.zip`, copied all `*_CA_*` files to `data/gdp` directory
 
 ## VMT
