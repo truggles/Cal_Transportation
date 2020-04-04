@@ -64,3 +64,44 @@ From Institute for Local Government: https://www.ca-ilg.org/post/basics-sb-375
  * "SB 375, authored by Senator Darrell Steinberg, directs the Air Resources Board to set regional targets for the reduction of greenhouse gas emissions. Aligning these regional plans is intended to help California achieve GHG reduction goals for cars and light trucks under AB 32, the state’s landmark climate change legislation."
 
 We only deal with codes LDA, LDT1, LDT2 (to be confirmed)
+
+
+# CARB Reporting
+
+
+
+
+# Regions
+
+From Appendix A:
+Charts and data presented by region are typically grouped and labeled as representing the Big 4 MPOs:
+ * Bay Area/MTC
+ * Sacramento/SACOG
+ * Southern California/SCAG
+ * San Diego/SANDAG MPO regions
+ * the San Joaquin Valley (SJV) MPOs representing:
+   * San Joaquin/SJCOG
+   * Stanislaus/StanCOG
+   * Merced/MCAG
+   * Madera/MCTC
+   * Fresno/FCOG a.k.a. COFCG in EMFAC2017
+   * Kings/KCAG
+   * Tulare/TCAG
+   * Kern/KCOG, and
+ * the remaining MPOs representing
+   * Butte/BCAG
+   * Shasta/SRTA a.k.a. SCRTPA in EMFAC2017
+   * Tahoe/TMPO
+   * Monterey Bay/AMBAG
+   * San Luis Obispo/SLOCOG
+   * Santa Barbara/SBCAG regions
+
+Most MPOs consist of a single county or a group of counties.
+
+## MPOs
+
+California’s 18 Metropolitan Planning Organizations: https://www.ca-ilg.org/post/californias-18-metropolitan-planning-organizations "Eighteen MPOs are designated in California, accounting for approximately 98% of the state’s population."
+
+## BEA's Metro Regions
+
+For mapping of BEA's metro regions used for 2001 onwards GDP see: https://apps.bea.gov/iTable/index_regional.cfm and make a map and compare against the CA map of MPOs `data/ca_MPOs_map.pdf`
