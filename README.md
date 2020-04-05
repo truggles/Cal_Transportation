@@ -110,7 +110,31 @@ For mapping of BEA's metro regions used for 2001 onwards GDP see: https://apps.b
 
 # Transportation Policy Stats
 
-Clean Vehicle Rebate Program: https://cleanvehiclerebate.org/eng/rebate-statistics
+## Clean Vehicle Rebate Program
 
+Excellent data: https://cleanvehiclerebate.org/eng/rebate-statistics
  * Cite: Center for Sustainable Energy (2020). California Air Resources Board Clean Vehicle Rebate Project, Rebate Statistics. Data last updated 3 Feb 2020. Retrieved 4 April 2020 from https://cleanvehiclerebate.org/rebate-statistic
  * Saved in gDrive because it is 37 MB `CVRP_stats_data_updated_3Feb2020.xlsx`
+
+## Clean Cars 4 All
+
+## Single-Occupant Vehicle Decals
+
+## Clean Car Standards
+
+## ZEV Mandate
+
+## Public ZEV Infrastructure Funding
+
+### Hydrogen
+
+See "Annual Hydrogen Evaluation" for 2019: https://ww2.arb.ca.gov/resources/documents/annual-hydrogen-evaluation
+
+Appendix B: Station Status Summary has table of all H2 stations by city and county and retail open date (no rebate quantities)
+
+
+### Electric
+
+California Electric Vehicle Infrastructure Project: https://energycenter.org/program/california-electric-vehicle-infrastructure-project
+
+
