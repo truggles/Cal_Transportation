@@ -105,3 +105,12 @@ California’s 18 Metropolitan Planning Organizations: https://www.ca-ilg.org/po
 ## BEA's Metro Regions
 
 For mapping of BEA's metro regions used for 2001 onwards GDP see: https://apps.bea.gov/iTable/index_regional.cfm and make a map and compare against the CA map of MPOs `data/ca_MPOs_map.pdf`
+
+
+
+# Transportation Policy Stats
+
+Clean Vehicle Rebate Program: https://cleanvehiclerebate.org/eng/rebate-statistics
+
+ * Cite: Center for Sustainable Energy (2020). California Air Resources Board Clean Vehicle Rebate Project, Rebate Statistics. Data last updated 3 Feb 2020. Retrieved 4 April 2020 from https://cleanvehiclerebate.org/rebate-statistic
+ * Saved in gDrive because it is 37 MB `CVRP_stats_data_updated_3Feb2020.xlsx`
