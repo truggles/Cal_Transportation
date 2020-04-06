@@ -6,7 +6,7 @@ import numpy as np
 
 
 
-def get_county_population(county):
+def get_population(counties):
 
     # For years 2000-2009
     # Broken link at the moment...
@@ -20,15 +20,17 @@ def get_county_population(county):
     df2['year'] = df2.index.year
 
     # There are lots of stupid spaces at the end of the county names
-    county_name = None
+    county_names = []
     for col in df2.columns:
-        if county in col:
-            county_name = col
-            break
-    assert(county_name != None)
+        for county in counties:
+            if county in col:
+                county_names.append(col)
+    assert(county_names != [])
 
     df2 = df2.reset_index()
-    df2['population'] = df2[county_name]
+    df2['population'] = np.zeros(len(df2.index))
+    for county in county_names:
+        df2['population'] += df2[county]
     df2 = df2[['year', 'population']]
 
 
@@ -63,13 +65,59 @@ def get_county_GDP(county):
 
 
 
-counties = ['Alameda', 'San Mateo']
+def get_GDP_from_Metro_files(files):
 
-for county in counties:
+    print(files)
 
-    #df = get_county_population(county)
+    years = {}
+    for y in range(2001, 2018):
+        years[str(y)] = []
+    for f in files:
+        df = pd.read_csv(f'data/gdp/{f}')
+        assert(df.loc[0, 'Description'] == 'All industry total'), "Misalignment in assumptions that first row is always good"
 
-    #print(county)
+        for y in range(2001, 2018):
+            years[str(y)].append(float(df.loc[0, str(y)]))
+
+    df = pd.DataFrame(years)
+    df = df.T
+    df['gdp'] = np.zeros(len(df.index))
+    for col in df.columns:
+        df['gdp'] += df[col]
+    df = df[['gdp']]
+
+    return df
+
+
+
+
+
+
+# FIXME import this from `region_mapping.xlsx`
+mpo_map = {
+        'SANDAG' : {
+            'counties' : ['San Diego',],
+            'gdp_files' : ['MAGDP2_CA_San-Diego-Carlsbad_2001_2017.csv',]
+        },
+        'SCAG' : {
+            'counties' : ['Imperial', 'Los Angeles', 'Orange', 
+                    'Ventura', 'Riverside', 'San Bernardino'],
+            'gdp_files' : ['MAGDP2_CA_El-Centro_2001_2017.csv',
+                    'MAGDP2_CA_Los-Angeles-Long-Beach-Anaheim_2001_2017.csv',
+                    'MAGDP2_CA_Oxnard-Thousand-Oaks-Ventura_2001_2017.csv',
+                    'MAGDP2_CA_Riverside-San-Bernardino-Ontario_2001_2017.csv'],
+        }
+}
+
+for mpo, info in mpo_map.items():
+
+    print(mpo)
+    print(info['counties'])
+    print(info['gdp_files'])
+
+    df = get_population(info['counties'])
+
     #print(df.head())
 
-    df_gdp = get_county_GDP(county)
+    get_GDP_from_Metro_files(info['gdp_files'])
+    #df_gdp = get_county_GDP(counties)
