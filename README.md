@@ -138,3 +138,26 @@ Appendix B: Station Status Summary has table of all H2 stations by city and coun
 California Electric Vehicle Infrastructure Project: https://energycenter.org/program/california-electric-vehicle-infrastructure-project
 
 
+## California Climate Investments
+
+Funded projects coming out of the CA cap-and-trade program. Annual reports: http://www.caclimateinvestments.ca.gov/annual-report
+
+ * List of California Climate Investments: https://www.arb.ca.gov/cc/capandtrade/auctionproceeds/cci_implemented_projects_2020ar.xlsx
+   * `data/cci_implemented_projects_2020ar.xlsx`
+   * Huge excel sheet with all of their projects, could sort through and find transporation related ones and use these for correlations later.  What I see so far (6 April 2020):
+     * Active Transportation Program
+     * Affordable Housing and Sustainable Communities - lots have commuting/transporation aspect
+     * Agricultural Worker Vanpools in San Joaquin Valley
+     * Car Sharing and Mobility Options
+     * Car Sharing and Mobility Options Pilot
+     * Clean Cars For All
+     * Enhanced Fleet Modernization Program Plus-Up - Consumer Based Light-Duty projects
+     * Financing Assistance Incentives Pilot	Financing Assistance Program	Improve financing options for lower-income consumers to purchase or lease new or used advanced technology vehicles.
+     * Hybrid and Zero-Emission Truck and Bus Voucher Incentive Project	Voucher Incentive	Voucher Incentive program to introduce clean, low-carbon hybrid, Low NOx, and electric medium- to heavy- duty trucks and buses into CA fleets by  reducing the cost of these vehicles
+     * Low Carbon Transit Operations Program
+     * Public Fleets Increased Incentives	Incentive Program	Incentivize public light duty fleets to transition to advanced clean vehicles
+     * Rural School Bus Pilot Project	School Bus Incentive	Funds cleaner school buses including zero-emission school buses, near-zero-emission plug-in hybrid school buses, and school buses with internal combustion engines or hybrid school buses operating on renewable fuels that reduce GHG emissions. Priority is given to funding buses used in small- and medium-size air districts.
+     * Transformative Climate Communities (Community) - some of them are for "Active Transportation Program"
+     * Transit and Intercity Rail Capital Program
+     * Vehicle Retirement and Replacement	EFMP Plus-Up	Voluntary Vehicle Retirement
+     * Zero-Emission Truck and Bus Pilot
