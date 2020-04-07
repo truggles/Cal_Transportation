@@ -2,7 +2,11 @@
 
 import pandas as pd
 import numpy as np
+from glob import glob
+import calendar
 
+import matplotlib.pyplot as plt
+import matplotlib
 
 
 
@@ -28,11 +32,11 @@ def get_population(counties):
     assert(county_names != [])
 
     df2 = df2.reset_index()
-    df2['population'] = np.zeros(len(df2.index))
+    df2['pop'] = np.zeros(len(df2.index))
     for county in county_names:
-        df2['population'] += df2[county]
-    df2 = df2[['year', 'population']]
-
+        df2['pop'] += df2[county]
+    df2 = df2[['year', 'pop']]
+    df2 = df2.set_index('year')
 
     return df2
 
@@ -65,22 +69,22 @@ def get_county_GDP(county):
 
 
 
-def get_GDP_from_Metro_files(files):
+def get_GDP_from_Metro_files(files, years):
 
-    print(files)
-
-    years = {}
-    for y in range(2001, 2018):
-        years[str(y)] = []
+    years_map = {}
+    for y in years:
+        years_map[str(y)] = []
     for f in files:
         df = pd.read_csv(f'data/gdp/{f}')
         assert(df.loc[0, 'Description'] == 'All industry total'), "Misalignment in assumptions that first row is always good"
 
-        for y in range(2001, 2018):
-            years[str(y)].append(float(df.loc[0, str(y)]))
+        for y in years:
+            years_map[str(y)].append(float(df.loc[0, str(y)]))
 
-    df = pd.DataFrame(years)
+    df = pd.DataFrame(years_map)
     df = df.T
+    df['year'] = years
+    df = df.set_index('year')
     df['gdp'] = np.zeros(len(df.index))
     for col in df.columns:
         df['gdp'] += df[col]
@@ -90,7 +94,82 @@ def get_GDP_from_Metro_files(files):
 
 
 
+# EMFAC has different files for each year, so we can save time
+# by only loading the years we are interested in
+def get_EMFAC_data(mpo, years):
 
+    # total values per year
+    vmt = []
+    co2 = []
+    fuel = []
+
+    for y in years:
+
+        # suffix is date/time I downloaded the file
+        f_name = glob(f'data/EMFAC2017/MPOs/EMFAC2017-EI-2011Class-{mpo}-{y}-Annual-*.csv')
+        assert(len(f_name) == 1), "Must have unique file"
+        df = pd.read_csv(f_name[0], header=7)
+
+        df = df.where( (df['Vehicle Category'] == 'LDA') |
+            (df['Vehicle Category'] == 'LDT1') |
+            (df['Vehicle Category'] == 'LDT2'), 0)
+
+        n_days = 366 if calendar.isleap(y) else 365
+        vmt.append(df['VMT'].sum()*n_days) # originally, miles/day for VMT
+        co2.append(df['CO2_TOTEX'].sum()*n_days) #  originally, tons/day for Emissions
+        fuel.append(df['Fuel Consumption'].sum()*n_days) # originally, 1000 gallons/day for Fuel Consumption
+
+    df = pd.DataFrame({
+        'year' : years,
+        'vmt' : vmt,
+        'co2' : co2,
+        'eLDV' : fuel
+    })
+    df = df.set_index('year')
+
+    return df
+    
+
+# Make one df only covering desired years
+def stitch(df_pop, df_gdp, df_emfac):
+
+    df_emfac['gdp'] = df_gdp['gdp']
+    df_emfac['pop'] = df_pop.loc[df_emfac.index[0]:df_emfac.index[-1], 'pop']
+
+    return df_emfac
+
+
+
+def plot_relative_changes(df, save_name):
+
+    fig, ax = plt.subplots()
+
+    for var in ['vmt', 'co2', 'eLDV', 'gdp', 'pop']:
+        ax.plot(df.index, df[var]/df.iloc[0][var]*100., label=var)
+
+    ax.set_ylabel(f"cumulative percent change ({df.index[0]} base)")
+    ax.set_xlabel("years")
+    
+    plt.legend()
+    plt.savefig(f"plots/{save_name}_relative_change.png")
+
+
+def plot_relative_changes_Kaya(df, save_name):
+
+    fig, ax = plt.subplots()
+
+    #for var in ['vmt', 'co2', 'eLDV', 'gdp', 'pop']:
+    ax.plot(df.index, df['pop']/df.iloc[0]['pop']*100., label='Pop')
+    ax.plot(df.index, (df['gdp']/df['pop'])/(df.iloc[0]['gdp']/df.iloc[0]['pop'])*100., label='GDP/Pop')
+    ax.plot(df.index, (df['vmt']/df['gdp'])/(df.iloc[0]['vmt']/df.iloc[0]['gdp'])*100., label='VMT/GDP')
+    ax.plot(df.index, (df['eLDV']/df['vmt'])/(df.iloc[0]['eLDV']/df.iloc[0]['vmt'])*100., label=r'E$_{LDV}$/VMT')
+    ax.plot(df.index, (df['co2']/df['eLDV'])/(df.iloc[0]['co2']/df.iloc[0]['eLDV'])*100., label=r'GHG$_{LDV}$/E$_{LDV}$')
+
+    ax.set_ylabel(f"cumulative percent change ({df.index[0]} base)")
+    ax.set_xlabel("years")
+    
+    plt.legend()
+    plt.savefig(f"plots/{save_name}_relative_change_Kaya.png")
 
 
 # FIXME import this from `region_mapping.xlsx`
@@ -109,15 +188,26 @@ mpo_map = {
         }
 }
 
+years = [y for y in range(2010, 2018)]
+
+print(years)
+
 for mpo, info in mpo_map.items():
 
     print(mpo)
-    print(info['counties'])
-    print(info['gdp_files'])
+    print(f"Counties: {info['counties']}")
+    #print(info['gdp_files'])
 
-    df = get_population(info['counties'])
+    df_pop = get_population(info['counties'])
 
-    #print(df.head())
+    df_gdp = get_GDP_from_Metro_files(info['gdp_files'], years)
 
-    get_GDP_from_Metro_files(info['gdp_files'])
-    #df_gdp = get_county_GDP(counties)
+    df_emfac = get_EMFAC_data(mpo, years)
+
+    df = stitch(df_pop, df_gdp, df_emfac)
+
+    plot_relative_changes(df, mpo)
+    plot_relative_changes_Kaya(df, mpo)
+
+
+
