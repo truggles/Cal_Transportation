@@ -157,6 +157,7 @@ def get_GDP_from_Metro_files(files, years):
 def get_EMFAC_data(mpo, years):
 
     # total values per year
+    total_vehicles = []
     vmt = []
     co2 = []
     fuel = []
@@ -173,12 +174,14 @@ def get_EMFAC_data(mpo, years):
             (df['Vehicle Category'] == 'LDT2'), 0)
 
         n_days = 366 if calendar.isleap(y) else 365
+        total_vehicles.append(df['Population'].sum()) # number of vehicles?
         vmt.append(df['VMT'].sum()*n_days) # originally, miles/day for VMT
         co2.append(df['CO2_TOTEX'].sum()*n_days) #  originally, tons/day for Emissions
         fuel.append(df['Fuel Consumption'].sum()*n_days) # originally, 1000 gallons/day for Fuel Consumption
 
     df = pd.DataFrame({
         'year' : years,
+        'n_vehicles' : total_vehicles,
         'vmt' : vmt,
         'co2' : co2,
         'eLDV' : fuel
