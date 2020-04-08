@@ -10,35 +10,54 @@ import matplotlib
 
 
 
-def get_population(counties):
+def get_population_files(counties, f_name):
 
-    # For years 2000-2009
-    # Broken link at the moment...
-
-    # For years 2010-2019
-    df2 = pd.read_excel('data/E-4_2019InternetVersion.xls', 
+    df = pd.read_excel(f'data/{f_name}', 
             sheet_name='Table 1 County State', header=3, index_col=0)
 
 
-    df2 = df2.T
-    df2['year'] = df2.index.year
+    # Drop the data with April (Census) dates as they become 
+    # approximately redundant with other 1 January 20XX values
+    # and are not consistent.
+    to_keep = []
+    for col in df.columns:
+        if col.month == 1:
+            to_keep.append(col)
+
+    df = df[to_keep]
+
+    df = df.T
+    df['year'] = df.index.year
 
     # There are lots of stupid spaces at the end of the county names
     county_names = []
-    for col in df2.columns:
+    for col in df.columns:
         for county in counties:
             if county in col:
                 county_names.append(col)
     assert(county_names != [])
 
-    df2 = df2.reset_index()
-    df2['pop'] = np.zeros(len(df2.index))
+    df = df.reset_index()
+    df['pop'] = np.zeros(len(df.index))
     for county in county_names:
-        df2['pop'] += df2[county]
-    df2 = df2[['year', 'pop']]
-    df2 = df2.set_index('year')
+        df['pop'] += df[county]
+    df = df[['year', 'pop']]
+    df = df.set_index('year')
 
-    return df2
+    return df
+
+
+
+def get_population(counties):
+
+    # For years 2000-2010
+    df1 = get_population_files(counties, 'E-4_2009InternetVersion.xls')
+
+    # For years 2011-2019
+    df2 = get_population_files(counties, 'E-4_2019InternetVersion.xls')
+
+    df1 = df1.append(df2)
+    return df1
 
 
 # Real GDP by chained 2012 dollars
@@ -131,10 +150,15 @@ def get_EMFAC_data(mpo, years):
     
 
 # Make one df only covering desired years
-def stitch(df_pop, df_gdp, df_emfac):
+def stitch_and_add_decomposition(df_pop, df_gdp, df_emfac):
 
     df_emfac['gdp'] = df_gdp['gdp']
     df_emfac['pop'] = df_pop.loc[df_emfac.index[0]:df_emfac.index[-1], 'pop']
+
+    df_emfac['GDP/Pop'] = df_emfac['gdp']/df_emfac['pop']
+    df_emfac['VMT/GDP'] = df_emfac['vmt']/df_emfac['gdp']
+    df_emfac['eLDV/vmt'] = df_emfac['eLDV']/df_emfac['vmt']
+    df_emfac['co2/eLDV'] = df_emfac['co2']/df_emfac['eLDV']
 
     return df_emfac
 
@@ -154,22 +178,60 @@ def plot_relative_changes(df, save_name):
     plt.savefig(f"plots/{save_name}_relative_change.png")
 
 
+def get_kaya_label_map():
+
+    return {
+        'pop' : ['Pop', 'blue'],
+        'GDP/Pop' : ['GDP/Pop', 'orange'],
+        'VMT/GDP' : ['VMT/GDP', 'green'],
+        'eLDV/vmt' : [r'E$_{LDV}$/VMT', 'red'],
+        'co2/eLDV' : [r'GHG$_{LDV}$/E$_{LDV}$', 'gray'],
+    }
+
 def plot_relative_changes_Kaya(df, save_name):
 
     fig, ax = plt.subplots()
 
-    #for var in ['vmt', 'co2', 'eLDV', 'gdp', 'pop']:
-    ax.plot(df.index, df['pop']/df.iloc[0]['pop']*100., label='Pop')
-    ax.plot(df.index, (df['gdp']/df['pop'])/(df.iloc[0]['gdp']/df.iloc[0]['pop'])*100., label='GDP/Pop')
-    ax.plot(df.index, (df['vmt']/df['gdp'])/(df.iloc[0]['vmt']/df.iloc[0]['gdp'])*100., label='VMT/GDP')
-    ax.plot(df.index, (df['eLDV']/df['vmt'])/(df.iloc[0]['eLDV']/df.iloc[0]['vmt'])*100., label=r'E$_{LDV}$/VMT')
-    ax.plot(df.index, (df['co2']/df['eLDV'])/(df.iloc[0]['co2']/df.iloc[0]['eLDV'])*100., label=r'GHG$_{LDV}$/E$_{LDV}$')
+    for var, info in get_kaya_label_map().items():
+        ax.plot(df.index, df[var]/df.iloc[0][var]*100., color=info[1], label=info[0])
 
     ax.set_ylabel(f"cumulative percent change ({df.index[0]} base)")
     ax.set_xlabel("years")
     
     plt.legend()
     plt.savefig(f"plots/{save_name}_relative_change_Kaya.png")
+
+
+def plot_simple_Kaya_decomposition(df, save_name):
+
+    fig, ax = plt.subplots()
+
+    # Calculate relative difference for each var
+    # at each annual step.
+    # Need to keep track of cumulative positions b/c of negative bars
+    cum_top = [0. for _ in range(len(df.index))]
+    cum_bottom = [0. for _ in range(len(df.index))]
+    for var, info in get_kaya_label_map().items():
+        ary = df[var] - df[var].shift(periods=1)
+        ary = ary/df[var].shift(periods=1)*100.
+        for i in range(1, len(df.index)):
+            label=info[0] if i == 1 else '_nolegend_'
+            if ary.iloc[i] >= 0:
+                ax.bar(df.index[i], ary.iloc[i], bottom=cum_top[i], color=info[1], label=label, alpha=.3)
+                cum_top[i] += ary.iloc[i]
+            else: # negative
+                ax.bar(df.index[i], ary.iloc[i], bottom=cum_bottom[i], color=info[1], label=label, alpha=.3)
+                cum_bottom[i] += ary.iloc[i]
+    co2 = df['co2'] - df['co2'].shift(periods=1)
+    co2 = co2/df['co2'].shift(periods=1)*100.
+    ax.scatter(df.index, co2, marker='^', color='black', label='GHG') 
+
+    ax.set_ylim(ax.get_ylim()[0]*1.5, ax.get_ylim()[1]*1.5)
+    ax.set_ylabel(f"cumulative percent change ({df.index[0]} base)")
+    ax.set_xlabel("years")
+    
+    plt.legend(ncol=2)
+    plt.savefig(f"plots/{save_name}_simple_Kaya_decomposition.png")
 
 
 # FIXME import this from `region_mapping.xlsx`
@@ -188,7 +250,7 @@ mpo_map = {
         }
 }
 
-years = [y for y in range(2010, 2018)]
+years = [y for y in range(2001, 2018)]
 
 print(years)
 
@@ -196,7 +258,6 @@ for mpo, info in mpo_map.items():
 
     print(mpo)
     print(f"Counties: {info['counties']}")
-    #print(info['gdp_files'])
 
     df_pop = get_population(info['counties'])
 
@@ -204,10 +265,11 @@ for mpo, info in mpo_map.items():
 
     df_emfac = get_EMFAC_data(mpo, years)
 
-    df = stitch(df_pop, df_gdp, df_emfac)
+    df = stitch_and_add_decomposition(df_pop, df_gdp, df_emfac)
 
     plot_relative_changes(df, mpo)
     plot_relative_changes_Kaya(df, mpo)
+    plot_simple_Kaya_decomposition(df, mpo)
 
 
 
