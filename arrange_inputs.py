@@ -8,6 +8,45 @@ import calendar
 import matplotlib.pyplot as plt
 import matplotlib
 
+import helpers
+
+
+def open_cvrp_rebate_file():
+
+    df = pd.read_excel('data/CVRP_stats_data_updated_3Feb2020.xlsx',
+            sheet_name='CVRP')
+
+    df['Application Year'] = df.agg({'Application Date': lambda x: x.year})
+
+    # Only return used columns
+    return df[['Rebate Dollars', 'Application Date', 'Application Year',
+        'Vehicle Category', 'County']]
+
+def get_cvrp_rebate_info(df_cvrp, counties):
+    
+    # All years we could have data for:
+    years = [y for y in range(2000, 2021)]
+
+    n_rebates = []
+    rebate_dollars = []
+    county_list = []
+    year_list = []
+    for y in years:
+        for county in counties:
+            year_list.append(y)
+            county_list.append(county)
+            idxs = (df_cvrp['County'] == county) & (df_cvrp['Application Year'] == y)
+            n_rebates.append(idxs.sum())
+            rebate_dollars.append(df_cvrp.loc[idxs, 'Rebate Dollars'].sum())
+
+    df = pd.DataFrame({
+        'year': year_list,
+        'county': county_list,
+        'n_rebates': n_rebates,
+        'rebate_dollars': rebate_dollars
+    })
+    print(df)
+    df.to_csv('data/cvrp_summary.csv')
 
 
 def get_population_files(counties, f_name):
@@ -227,7 +266,7 @@ def plot_simple_Kaya_decomposition(df, save_name):
     ax.scatter(df.index, co2, marker='^', color='black', label='GHG') 
 
     ax.set_ylim(ax.get_ylim()[0]*1.5, ax.get_ylim()[1]*1.5)
-    ax.set_ylabel(f"cumulative percent change ({df.index[0]} base)")
+    ax.set_ylabel(r"CO2e (change from previous year)")
     ax.set_xlabel("years")
     
     plt.legend(ncol=2)
@@ -250,9 +289,16 @@ mpo_map = {
         }
 }
 
+make_cvrp_summary = True
+make_cvrp_summary = False
 years = [y for y in range(2001, 2018)]
 
 print(years)
+
+if make_cvrp_summary:
+    print("Opening CVRP rebate file")
+    df_cvrp = open_cvrp_rebate_file()
+    get_cvrp_rebate_info(df_cvrp, helpers.get_all_counties())
 
 for mpo, info in mpo_map.items():
 
