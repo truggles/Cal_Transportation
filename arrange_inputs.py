@@ -358,35 +358,56 @@ def plot_simple_correlations(df, mpo):
 
 
 
-def plot_agg_simple_correlations(df, mpo):
+def plot_agg_simple_correlations(df, save_name):
 
-    for rebate, lab in {'n_rebates' : 'Number of CVRP rebates per 1,000 vehicles',
-                        'rebate_dollars' : 'Total CVRP rebate dollars per 1,000 vehicles ($)'}.items():
+    mpo_map = helpers.get_mpo_map()
 
+    for rebate, lab in {'n_rebates' : 'Number of CVRP rebates per 1,000 vehicles in region',
+                        'rebate_dollars' : 'Total CVRP rebate dollars per 1,000 vehicles in region ($)',
+                        }.items():
         
         for kaya, info in get_kaya_label_map().items():
             fig, ax = plt.subplots()
-            ax.scatter(df[rebate]/df['n_vehicles']*1000, df[f'{kaya}_pct'], label=info[0], color=info[1])
-            #idxs = (df[rebate] > 0)
-            #ax.scatter(df.loc[idxs, rebate]/df.loc[idxs, 'n_vehicles']*1000, df.loc[idxs, f'{kaya}_pct'], label=info[0], color=info[1])
+
+            for i, mpo in enumerate(mpo_map.keys()):
+
+                m = 'o' if i < 10 else '^'
+
+                #idxs = (df[rebate] > 0)
+                idxs = (df['mpo'] == mpo)
+                #ax.scatter(df.[rebate]/df['n_vehicles']*1000, df[f'{kaya}_pct'], label=info[0], color=info[1])
+                ax.scatter(df.loc[idxs, rebate]/df.loc[idxs, 'n_vehicles']*1000, df.loc[idxs, f'{kaya}_pct'], label=mpo.replace('_and_',' & '), alpha=0.3, marker=m)
 
             ax.set_ylabel("Kaya factor percent change")
             ax.set_xlabel(lab)
             
-            plt.legend()
-            plt.savefig(f"plots/{mpo}_correlations_pct_{rebate}_{kaya.replace('/','_per_')}.png")
+            plt.legend(ncol=4, fontsize=8)
+            plt.title(kaya)
+            plt.savefig(f"plots/{save_name}_correlations_pct_{rebate}_{kaya.replace('/','_per_')}.png")
             plt.close()
 
+            # Below is redundant for both rebate info types
+            if rebate == 'rebate_dollars':
+                continue
+
+            # Next plot of var vs years
             fig, ax = plt.subplots()
-            ax.scatter(df['year'], df[f'{kaya}_pct'], label=info[0], color=info[1])
-            #idxs = (df[rebate] > 0)
-            #ax.scatter(df.loc[idxs, rebate]/df.loc[idxs, 'n_vehicles']*1000, df.loc[idxs, f'{kaya}_pct'], label=info[0], color=info[1])
+
+            for i, mpo in enumerate(mpo_map.keys()):
+
+                m = 'o' if i < 10 else '^'
+
+                #idxs = (df[rebate] > 0)
+                idxs = (df['mpo'] == mpo)
+                #ax.scatter(df['year'], df[f'{kaya}_pct'], label=info[0], color=info[1])
+                ax.scatter(df.loc[idxs, 'year'], df.loc[idxs, f'{kaya}_pct'], label=mpo.replace('_and_',' & '), alpha=0.3, marker=m)
 
             ax.set_ylabel("Kaya factor percent change")
             ax.set_xlabel("Year")
             
-            plt.legend()
-            plt.savefig(f"plots/{mpo}_correlations_pct_{rebate}_year_{kaya.replace('/','_per_')}.png")
+            plt.legend(ncol=4, fontsize=8)
+            plt.title(kaya)
+            plt.savefig(f"plots/{save_name}_correlations_pct_year_{kaya.replace('/','_per_')}.png")
             plt.close()
 
 
@@ -408,115 +429,6 @@ def aggregate_mpos():
 
     return master
 
-mpo_map = {
-        'MTC_and_AMBAG' : {
-            'counties' : [
-                'Monterey',
-                'San Benito',
-                'Santa Cruz',
-                'Napa',
-                'Alameda',
-                'Contra Costa',
-                'Marin',
-                'San Francisco',
-                'San Mateo',
-                'Santa Clara',
-                'Sonoma',
-                'Solano',
-            ],
-            'gdp_files' : [
-                'MAGDP2_CA_Salinas_2001_2017.csv',
-                'MAGDP2_CA_San-Jose-Sunnyvale-Santa-Clara_2001_2017.csv',
-                'MAGDP2_CA_Santa-Cruz-Watsonville_2001_2017.csv',
-                'MAGDP2_CA_Napa_2001_2017.csv',
-                'MAGDP2_CA_San-Francisco-Oakland-Hayward_2001_2017.csv',
-                'MAGDP2_CA_Santa-Rosa_2001_2017.csv',
-                'MAGDP2_CA_Vallejo-Fairfield_2001_2017.csv',
-            ]
-        },
-        'BCAG' : {
-            'counties' : ['Butte',],
-            'gdp_files' : ['MAGDP2_CA_Chico_2001_2017.csv',]
-        },
-        'COFCG' : { # was COFCG, set to COFCG to align with EMFAC2017
-            'counties' : ['Fresno',],
-            'gdp_files' : ['MAGDP2_CA_Fresno_2001_2017.csv',]
-        },
-        'KCAG' : {
-            'counties' : ['Kings',],
-            'gdp_files' : ['MAGDP2_CA_Hanford-Corcoran_2001_2017.csv',]
-        },
-        'KCOG' : {
-            'counties' : ['Kern',],
-            'gdp_files' : ['MAGDP2_CA_Bakersfield_2001_2017.csv',]
-        },
-        'MCAG' : {
-            'counties' : ['Merced',],
-            'gdp_files' : ['MAGDP2_CA_Merced_2001_2017.csv',]
-        },
-        'MCTC' : {
-            'counties' : ['Madera',],
-            'gdp_files' : ['MAGDP2_CA_Madera_2001_2017.csv',]
-        },
-        'SACOG_and_TMPO' : {
-            'counties' : [
-                'Sacramento',
-                'Yolo',
-                'Sutter',
-                'Yuba',
-                'El Dorado',
-                'Placer',
-            ],
-            'gdp_files' : [
-                'MAGDP2_CA_Sacramento--Roseville--Arden-Arcade_2001_2017.csv',
-                'MAGDP2_CA_Yuba-City_2001_2017.csv',
-            ]
-        },
-        'SANDAG' : {
-            'counties' : ['San Diego',],
-            'gdp_files' : ['MAGDP2_CA_San-Diego-Carlsbad_2001_2017.csv',]
-        },
-        'SBCAG' : {
-            'counties' : ['Santa Barbara',],
-            'gdp_files' : ['MAGDP2_CA_Santa-Maria-Santa-Barbara_2001_2017.csv',]
-        },
-        'SCAG' : {
-            'counties' : [
-                'Imperial',
-                'Los Angeles',
-                'Orange',
-                'Ventura',
-                'Riverside',
-                'San Bernardino'
-            ],
-            'gdp_files' : [
-                'MAGDP2_CA_El-Centro_2001_2017.csv',
-                'MAGDP2_CA_Los-Angeles-Long-Beach-Anaheim_2001_2017.csv',
-                'MAGDP2_CA_Oxnard-Thousand-Oaks-Ventura_2001_2017.csv',
-                'MAGDP2_CA_Riverside-San-Bernardino-Ontario_2001_2017.csv'
-            ]
-        },
-        'SCRTPA' : {
-            'counties' : ['Shasta',],
-            'gdp_files' : ['MAGDP2_CA_Redding_2001_2017.csv',]
-        },
-        'SJCOG' : {
-            'counties' : ['San Joaquin',],
-            'gdp_files' : ['MAGDP2_CA_Stockton-Lodi_2001_2017.csv',]
-        },
-        'SLOCOG' : {
-            'counties' : ['San Luis Obispo',],
-            'gdp_files' : ['MAGDP2_CA_San-Luis-Obispo-Paso-Robles-Arroyo-Grande_2001_2017.csv',]
-        },
-        'StanCOG' : {
-            'counties' : ['Stanislaus',],
-            'gdp_files' : ['MAGDP2_CA_Modesto_2001_2017.csv',]
-        },
-        'TCAG' : {
-            'counties' : ['Tulare',],
-            'gdp_files' : ['MAGDP2_CA_Visalia-Porterville_2001_2017.csv',]
-        }
-}
 
 make_cvrp_summary = True
 make_cvrp_summary = False
@@ -526,6 +438,8 @@ plot_per_mpo_data = True
 plot_per_mpo_data = False
 plot_agg_mpo_data = True
 #plot_agg_mpo_data = False
+
+mpo_map = helpers.get_mpo_map()
 
 years = [y for y in range(2001, 2018)]
 
