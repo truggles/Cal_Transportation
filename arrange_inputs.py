@@ -199,7 +199,7 @@ def get_EMFAC_data(mpo, years):
         total_vehicles.append(df['Population'].sum()) # number of vehicles?
         vmt.append(df['VMT'].sum()*n_days) # originally, miles/day for VMT
         co2.append(df['CO2_TOTEX'].sum()*n_days) #  originally, tons/day for Emissions
-        fuel.append(df['Fuel Consumption'].sum()*n_days) # originally, 1000 gallons/day for Fuel Consumption
+        fuel.append(df['Fuel Consumption'].sum()*n_days/1000.) # originally, 1000 gallons/day for Fuel Consumption
 
     df = pd.DataFrame({
         'year' : years,
@@ -224,8 +224,31 @@ def stitch_and_add_decomposition(df_pop, df_gdp, df_emfac):
     df_emfac['eLDV/vmt'] = df_emfac['eLDV']/df_emfac['vmt']
     df_emfac['co2/eLDV'] = df_emfac['co2']/df_emfac['eLDV']
 
+    # simple Kaya decomposition
+    for kaya in get_kaya_label_map().keys():
+        df_emfac[f'{kaya}_pct'] = df_emfac[kaya] - df_emfac[kaya].shift(periods=1)
+        df_emfac[f'{kaya}_pct'] = df_emfac[f'{kaya}_pct']/df_emfac[kaya].shift(periods=1)*100.
+        df_emfac[f'{kaya}_diff'] = df_emfac[kaya] - df_emfac[kaya].shift(periods=1)
+
     return df_emfac
 
+
+def add_cvrp_rebate_info(counties, df):
+
+    df_cvrp = pd.read_csv('data/cvrp_summary.csv')
+
+    n_rebates = np.zeros(len(df.index))
+    rebate_dollars = np.zeros(len(df.index))
+    for i, yr in enumerate(df.index):
+        for county in counties:
+            idxs = (df_cvrp['county'] == county) & (df_cvrp['year'] == yr)
+            n_rebates[i] += df_cvrp.loc[idxs, 'n_rebates'].sum()
+            rebate_dollars[i] += df_cvrp.loc[idxs, 'rebate_dollars'].sum()
+
+    df['n_rebates'] = n_rebates
+    df['rebate_dollars'] = rebate_dollars
+
+    return df
 
 
 def plot_relative_changes(df, save_name):
@@ -278,8 +301,7 @@ def plot_simple_Kaya_decomposition(df, save_name):
     cum_top = [0. for _ in range(len(df.index))]
     cum_bottom = [0. for _ in range(len(df.index))]
     for var, info in get_kaya_label_map().items():
-        ary = df[var] - df[var].shift(periods=1)
-        ary = ary/df[var].shift(periods=1)*100.
+        ary = df[f'{var}_pct']
         for i in range(1, len(df.index)):
             label=info[0] if i == 1 else '_nolegend_'
             if ary.iloc[i] >= 0:
@@ -434,6 +456,10 @@ for mpo, info in mpo_map.items():
     df_emfac = get_EMFAC_data(mpo, years)
 
     df = stitch_and_add_decomposition(df_pop, df_gdp, df_emfac)
+
+    df = add_cvrp_rebate_info(info['counties'], df)
+
+    df.to_csv(f'data/{mpo}.csv')
 
     plot_relative_changes(df, mpo)
     plot_relative_changes_Kaya(df, mpo)
