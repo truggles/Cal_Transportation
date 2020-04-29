@@ -251,6 +251,19 @@ def add_cvrp_rebate_info(counties, df):
     return df
 
 
+
+def stitch_mpo_data(mpo, info):
+
+    df_pop = get_population(info['counties'])
+    df_gdp = get_GDP_from_Metro_files(info['gdp_files'], years)
+    df_emfac = get_EMFAC_data(mpo, years)
+    df = stitch_and_add_decomposition(df_pop, df_gdp, df_emfac)
+    df = add_cvrp_rebate_info(info['counties'], df)
+
+    df.to_csv(f'data/{mpo}.csv')
+
+
+
 def plot_relative_changes(df, save_name):
 
     fig, ax = plt.subplots()
@@ -322,6 +335,78 @@ def plot_simple_Kaya_decomposition(df, save_name):
     plt.savefig(f"plots/{save_name}_simple_Kaya_decomposition.png")
     plt.close()
 
+
+
+
+def plot_simple_correlations(df, mpo):
+
+
+    for rebate, lab in {'n_rebates' : 'Number of CVRP rebates per 1,000 vehicles',
+                        'rebate_dollars' : 'Total CVRP rebate dollars per 1,000 vehicles ($)'}.items():
+
+        fig, ax = plt.subplots()
+        
+        for kaya, info in get_kaya_label_map().items():
+            ax.scatter(df[rebate]/df['n_vehicles']*1000, df[f'{kaya}_pct'], label=info[0], color=info[1])
+
+        ax.set_ylabel("Kaya factor percent change")
+        ax.set_xlabel(lab)
+        
+        plt.legend(ncol=2)
+        plt.savefig(f"plots/{mpo}_correlations_pct_{rebate}.png")
+        plt.close()
+
+
+
+def plot_agg_simple_correlations(df, mpo):
+
+    for rebate, lab in {'n_rebates' : 'Number of CVRP rebates per 1,000 vehicles',
+                        'rebate_dollars' : 'Total CVRP rebate dollars per 1,000 vehicles ($)'}.items():
+
+        
+        for kaya, info in get_kaya_label_map().items():
+            fig, ax = plt.subplots()
+            ax.scatter(df[rebate]/df['n_vehicles']*1000, df[f'{kaya}_pct'], label=info[0], color=info[1])
+            #idxs = (df[rebate] > 0)
+            #ax.scatter(df.loc[idxs, rebate]/df.loc[idxs, 'n_vehicles']*1000, df.loc[idxs, f'{kaya}_pct'], label=info[0], color=info[1])
+
+            ax.set_ylabel("Kaya factor percent change")
+            ax.set_xlabel(lab)
+            
+            plt.legend()
+            plt.savefig(f"plots/{mpo}_correlations_pct_{rebate}_{kaya.replace('/','_per_')}.png")
+            plt.close()
+
+            fig, ax = plt.subplots()
+            ax.scatter(df['year'], df[f'{kaya}_pct'], label=info[0], color=info[1])
+            #idxs = (df[rebate] > 0)
+            #ax.scatter(df.loc[idxs, rebate]/df.loc[idxs, 'n_vehicles']*1000, df.loc[idxs, f'{kaya}_pct'], label=info[0], color=info[1])
+
+            ax.set_ylabel("Kaya factor percent change")
+            ax.set_xlabel("Year")
+            
+            plt.legend()
+            plt.savefig(f"plots/{mpo}_correlations_pct_{rebate}_year_{kaya.replace('/','_per_')}.png")
+            plt.close()
+
+
+# Aggregate all mpo data files into one df
+def aggregate_mpos():
+
+    for i, mpo in enumerate(mpo_map.keys()):
+        if i == 0:
+            master = pd.read_csv(f'data/{mpo}.csv')
+            mpo_col = [mpo for _ in range(len(master.index))]
+            master['mpo'] = mpo_col
+            #master = master.set_index(['mpo', 'year'])
+        else:
+            df = pd.read_csv(f'data/{mpo}.csv')
+            mpo_col = [mpo for _ in range(len(df.index))]
+            df['mpo'] = mpo_col
+            #df = df.set_index(['mpo', 'year'])
+            master = master.append(df)
+
+    return master
 
 mpo_map = {
         'MTC_and_AMBAG' : {
@@ -435,6 +520,13 @@ mpo_map = {
 
 make_cvrp_summary = True
 make_cvrp_summary = False
+prep_mpo_data = True
+prep_mpo_data = False
+plot_per_mpo_data = True
+plot_per_mpo_data = False
+plot_agg_mpo_data = True
+#plot_agg_mpo_data = False
+
 years = [y for y in range(2001, 2018)]
 
 print(years)
@@ -444,26 +536,26 @@ if make_cvrp_summary:
     df_cvrp = open_cvrp_rebate_file()
     get_cvrp_rebate_info(df_cvrp, helpers.get_all_counties())
 
-for mpo, info in mpo_map.items():
+if prep_mpo_data:
+    print("prep_mpo_data")
+    for mpo, info in mpo_map.items():
+        print(mpo)
+        print(f"Counties: {info['counties']}")
+        stitch_mpo_data(mpo, info)
 
-    print(mpo)
-    print(f"Counties: {info['counties']}")
+if plot_per_mpo_data:
+    print("plot_per_mpo_data")
 
-    df_pop = get_population(info['counties'])
+    for mpo, info in mpo_map.items():
+        df = pd.read_csv(f'data/{mpo}.csv')
+        plot_relative_changes(df, mpo)
+        plot_relative_changes_Kaya(df, mpo)
+        plot_simple_Kaya_decomposition(df, mpo)
+        plot_simple_correlations(df, mpo)
 
-    df_gdp = get_GDP_from_Metro_files(info['gdp_files'], years)
+if plot_agg_mpo_data:
+    print("plot_agg_mpo_data")
 
-    df_emfac = get_EMFAC_data(mpo, years)
-
-    df = stitch_and_add_decomposition(df_pop, df_gdp, df_emfac)
-
-    df = add_cvrp_rebate_info(info['counties'], df)
-
-    df.to_csv(f'data/{mpo}.csv')
-
-    plot_relative_changes(df, mpo)
-    plot_relative_changes_Kaya(df, mpo)
-    plot_simple_Kaya_decomposition(df, mpo)
-
-
-
+    df = aggregate_mpos()
+    plot_simple_correlations(df, 'AGGREGATE')
+    plot_agg_simple_correlations(df, 'AGGREGATE')
